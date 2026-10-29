@@ -1,0 +1,13 @@
+{
+  "start": "2024-01-01",
+  "end": "2026-01-01",
+  "snapshots": 25,
+  "bank_observations": 889,
+  "distinct_banks": 36,
+  "source_publications": 50,
+  "reconciliation_checks": 750,
+  "checks_passed": 750,
+  "source_hashes_verified": 50,
+  "unit": "UZS billion",
+  "retrieved_at": "2026-10-28T16:34:03.905956+00:00"
+}
