@@ -1,0 +1,15 @@
+date,check,actual,expected,residual,tolerance,status
+2025-01-01,assets_agrees_with_bank_archive,769330.0,769330.0,0.0,1.0,pass
+2025-01-01,loans_agrees_with_bank_archive,533121.0,533121.0,0.0,1.0,pass
+2025-01-01,deposits_agrees_with_bank_archive,308692.0,308692.0,0.0,1.0,pass
+2025-01-01,balance_capital_agrees_with_bank_archive,114792.0,114792.0,0.0,1.0,pass
+2025-01-01,balance_equation,769330.0,769330.0,0.0,1.5,pass
+2025-01-01,maturity_total_agrees_with_sector,308692.0,308692.0,0.0,1.0,pass
+2025-01-01,maturity_buckets_reconcile,308693.0,308692.0,1.0,3.0,pass
+2026-01-01,assets_agrees_with_bank_archive,924763.0,924763.0,0.0,1.0,pass
+2026-01-01,loans_agrees_with_bank_archive,604002.0,604002.0,0.0,1.0,pass
+2026-01-01,deposits_agrees_with_bank_archive,417258.0,417258.0,0.0,1.0,pass
+2026-01-01,balance_capital_agrees_with_bank_archive,135339.0,135339.0,0.0,1.0,pass
+2026-01-01,balance_equation,924763.0,924763.0,0.0,1.5,pass
+2026-01-01,maturity_total_agrees_with_sector,417258.0,417258.0,0.0,1.0,pass
+2026-01-01,maturity_buckets_reconcile,417258.0,417258.0,0.0,3.0,pass

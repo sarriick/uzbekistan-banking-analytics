@@ -97,12 +97,16 @@ def build(root: Path = ROOT):
     out = root / "data/processed"
     out.mkdir(parents=True, exist_ok=True)
     fact, sector, quality, manifest = extract(root)
-    quality.to_csv(out / "quality_checks.csv", index=False, float_format="%.6f")
+    quality.to_csv(out / "quality_checks.csv", index=False, float_format="%.6f", lineterminator="\n")
     if not (quality.status == "pass").all():
         failed = quality[quality.status != "pass"]
         raise ValueError(f"Reconciliation failed; see quality_checks.csv:\n{failed.to_string(index=False)}")
-    fact.to_csv(out / "bank_month.csv", index=False)
-    sector.to_csv(out / "sector_totals.csv", index=False)
+    fact.to_csv(out / "bank_month.csv", index=False, lineterminator="\n")
+    sector.to_csv(out / "sector_totals.csv", index=False, lineterminator="\n")
+    from .research import prepare_research
+    context, macro, research_quality, research_sources = prepare_research(root)
+    macro_frame = pd.DataFrame([macro])
+    context["date"] = pd.to_datetime(context.date)
     fact["date"] = pd.to_datetime(fact.date)
     sector["date"] = pd.to_datetime(sector.date)
     with duckdb.connect(str(out / "banking.duckdb")) as con:
@@ -111,18 +115,30 @@ def build(root: Path = ROOT):
         con.execute("CREATE OR REPLACE TABLE fact_bank_month AS SELECT * REPLACE(CAST(date AS DATE) AS date) FROM input_banks")
         con.execute("CREATE OR REPLACE TABLE sector_totals AS SELECT * REPLACE(CAST(date AS DATE) AS date) FROM input_sector")
         con.execute((root / "sql/01_marts.sql").read_text(encoding="utf-8"))
+        con.register("input_context", context)
+        con.register("input_macro", macro_frame)
+        con.execute("CREATE OR REPLACE TABLE sector_context AS SELECT * REPLACE(CAST(date AS DATE) AS date) FROM input_context")
+        con.execute("CREATE OR REPLACE TABLE macro_context AS SELECT * FROM input_macro")
+        con.execute((root / "sql/03_completed_research.sql").read_text(encoding="utf-8"))
         for view, order in (("bank_month", "date, bank_id"), ("sector_month", "date"),
                             ("ownership_month", "date, ownership"), ("concentration", "date")):
-            con.sql(f"SELECT * FROM {view} ORDER BY {order}").df().to_csv(out / f"{view}_metrics.csv", index=False, float_format="%.8f")
+            con.sql(f"SELECT * FROM {view} ORDER BY {order}").df().to_csv(out / f"{view}_metrics.csv", index=False, float_format="%.8f", lineterminator="\n")
+        for view, order in (("sector_research", "date"), ("deposit_growth_bridge", "dimension, component"),
+                            ("state_share_bridge", "opening_sector_assets"), ("funding_structure", "date, ownership"),
+                            ("bank_deposit_growth", "date, bank_id"), ("initial_top5_growth", "cohort")):
+            con.sql(f"SELECT * FROM {view} ORDER BY {order}").df().to_csv(out / f"{view}.csv", index=False, float_format="%.8f", lineterminator="\n")
     summary = {
         "start": str(fact.date.min().date()), "end": str(fact.date.max().date()),
         "snapshots": int(fact.date.nunique()), "bank_observations": len(fact),
-        "distinct_banks": int(fact.bank_id.nunique()), "source_publications": len(manifest),
-        "reconciliation_checks": len(quality), "checks_passed": int((quality.status == 'pass').sum()),
-        "source_hashes_verified": len(manifest), "unit": "UZS billion",
-        "retrieved_at": max(s["retrieved_at"] for s in manifest),
+        "distinct_banks": int(fact.bank_id.nunique()), "source_publications": len(manifest)+len(research_sources),
+        "bank_source_publications": len(manifest), "research_source_publications": len(research_sources),
+        "reconciliation_checks": len(quality)+len(research_quality),
+        "checks_passed": int((quality.status == 'pass').sum())+int((research_quality.status == 'pass').sum()),
+        "bank_reconciliation_checks": len(quality), "research_reconciliation_checks": len(research_quality),
+        "source_hashes_verified": len(manifest)+len(research_sources), "unit": "UZS billion",
+        "retrieved_at": max(s["retrieved_at"] for s in manifest+research_sources),
     }
-    (out / "build_summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    (out / "build_summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(json.dumps(summary, indent=2))
     return summary
 

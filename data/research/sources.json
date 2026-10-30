@@ -1,0 +1,56 @@
+[
+  {
+    "source_id": "2026-01_liquidity",
+    "kind": "liquidity",
+    "url": "https://cbu.uz/ru/statistics/bankstats/3326238/",
+    "title": "Динамика ликвидности банковского сектора",
+    "path": "data/research/raw/2026-01_liquidity.html.gz",
+    "sha256": "bb8bf7ceea64fffbbc963492bc0a1ab6da574e7395e1281b5e20b5abb4254a4c",
+    "retrieved_at": "2026-10-29T03:00:04.389589+00:00"
+  },
+  {
+    "source_id": "2026-01_capital_adequacy",
+    "kind": "capital_adequacy",
+    "url": "https://cbu.uz/ru/statistics/bankstats/3326240/",
+    "title": "Достаточность собственного капитала банковского сектора",
+    "path": "data/research/raw/2026-01_capital_adequacy.html.gz",
+    "sha256": "91ef31ce69caebc7c8ab7d1bf4fed31cfc2105a9cdcfd1cd5f06d27889c1c403",
+    "retrieved_at": "2026-10-29T03:00:05.079573+00:00"
+  },
+  {
+    "source_id": "2026-01_maturity",
+    "kind": "maturity",
+    "url": "https://cbu.uz/ru/statistics/bankstats/3326243/",
+    "title": "Информация об остатках депозитов по срокам",
+    "path": "data/research/raw/2026-01_maturity.html.gz",
+    "sha256": "b3aa89dc26943cdaae5d2175d4e3bc82a45a1fc7ee49a6b2757dbe2c8e320eb9",
+    "retrieved_at": "2026-10-29T03:00:05.736132+00:00"
+  },
+  {
+    "source_id": "2026-01_sector_indicators",
+    "kind": "sector_indicators",
+    "url": "https://cbu.uz/ru/statistics/bankstats/3326259/",
+    "title": "Сведения об основных показателях банковского сектора",
+    "path": "data/research/raw/2026-01_sector_indicators.html.gz",
+    "sha256": "115971e207095620c0e04114b3f914c4658960b7c7ea0b139966a85bb3fa2722",
+    "retrieved_at": "2026-10-29T03:00:07.547981+00:00"
+  },
+  {
+    "source_id": "2026-01_balance",
+    "kind": "balance",
+    "url": "https://cbu.uz/ru/statistics/bankstats/3326264/",
+    "title": "Сводный баланс коммерческих банков",
+    "path": "data/research/raw/2026-01_balance.html.gz",
+    "sha256": "ac62274bbd658ff269e6b16fa97e4f7b8f0d02f5281238a0042d5e9a0067495c",
+    "retrieved_at": "2026-10-29T03:00:08.820277+00:00"
+  },
+  {
+    "source_id": "2026-01_monetary_policy",
+    "kind": "monetary_policy",
+    "url": "https://cbu.uz/ru/monetary-policy/publications/press-releases/3368594/",
+    "title": "Правление Центрального банка на заседании 28 января 2026 года приняло решение установить основную ставку на уровне 14% годовых.",
+    "path": "data/research/raw/2026-01_monetary_policy.html.gz",
+    "sha256": "f506d9ef5d8171396b272eb2e8fcba51e36d81e2304dc69bf7e3149ae25a4475",
+    "retrieved_at": "2026-10-29T03:02:27.021038+00:00"
+  }
+]

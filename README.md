@@ -1,8 +1,8 @@
 # Uzbekistan Banking Analytics
 
-An end-to-end analytics project on the growth, market shares and funding structure of Uzbekistan's banks. Built from **50 official Central Bank publications**, with **889 bank-month observations**, **25 monthly snapshots** and **36 distinct banks**.
+A completed study of growth, market shares, liquidity and funding in Uzbekistan's banking sector. Built from **56 official Central Bank publications**, with **889 bank-month observations**, **25 monthly snapshots** and **36 distinct banks**.
 
-**Research question:** Which banks are gaining market share, and how is the relationship between loans and deposits changing?
+**Research result:** Deposit funding expanded, sector liquidity buffers increased and assets became less concentrated. The study identifies the banks and balance-sheet components behind these changes.
 
 The dataset covers **1 January 2024 to 1 January 2026**, capturing the two full calendar years 2024–2025. This is a historical research project, not a live monitoring service.
 
@@ -10,21 +10,23 @@ The dataset covers **1 January 2024 to 1 January 2026**, capturing the two full 
 
 ## Results at a glance
 
-- In 2025, deposits increased **35.2%**, compared with **13.3%** for loans and **20.2%** for assets.
-- The top five banks' share of assets fell from **57.4% to 50.8%** between January 2024 and January 2026.
-- The sector loan-to-deposit ratio fell from **195.0% to 144.8%** over the same period.
-- Banks with state participation accounted for **63.5%** of assets at the final date, compared with **67.7%** at the start.
+- In 2025, deposits grew **35.2%**, or **26.0% after CPI adjustment**. Local-currency balances supplied **90.9%** of growth; legal entities supplied **65.0%** in the separate customer breakdown.
+- Sector **LCR rose from 193.8% to 207.5%** and **NSFR from 115.3% to 119.9%**, exceeding the 100% minima reported by CBU.
+- The top five banks' share of assets fell from **57.4% to 50.8%** over 2024–2025. Assets outside the initial top five grew **64.7%**, versus **24.8%** within that fixed cohort.
+- An endpoint decomposition attributes **−4.21 percentage points** of the state-participation asset-share change to relative asset growth and **−0.06 points** to Poytaxt Bank's reclassification.
+- **Octobank** led deposit-share gains; **Agrobank** added the largest deposit amount; **Kapitalbank** held the largest individual-depositor balance.
+- Deposits funded **42.1%** of state-participation banks' liabilities and **72.1%** of other banks' liabilities at 1 January 2026.
 
-These are descriptive findings. They do not establish causality, bank safety or regulatory compliance. Calculations and source links are in the [research memo](reports/findings.ru.md).
+Each of the [seven completed findings](reports/findings.ru.md) includes calculations, an explicit conclusion and primary-source links. Liquidity results use CBU's aggregate ratios. Currency, customer and maturity contributions are independent decompositions of the same deposit increase.
 
 ## Explore the project
 
 ![Streamlit dashboard: Uzbekistan banking sector](reports/dashboard.png)
 
-- **Streamlit app:** four tabs covering the sector, bank comparisons, lending and deposits, and source evidence. Date and metric selectors, indexed comparisons and CSV downloads are included. Interface language: Russian; normalized bank labels: English.
+- **Streamlit app:** five tabs covering the sector, bank comparisons, lending and funding, completed research, and source evidence. The research tab retains its labelled 2024–2025 study window. Date and metric selectors, indexed comparisons and CSV downloads are included. Interface language: Russian; normalized bank labels: English.
 - **Portable report:** download and open [reports/overview.html](reports/overview.html) in a browser. Its interactive charts are self-contained and need no Python or internet. GitHub displays the HTML source; download the file to view it.
-- **SQL analysis:** [five research queries](sql/02_research_questions.sql) and the [metric definitions](sql/01_marts.sql).
-- **Source evidence:** the complete [source manifest](data/sources.json) records reporting dates, URLs, retrieval timestamps and SHA-256 hashes. Compressed original HTML publications are included.
+- **SQL analysis:** [seven result queries](sql/02_research_questions.sql), [core metrics](sql/01_marts.sql) and [research decompositions](sql/03_completed_research.sql).
+- **Source evidence:** manifests cover [50 monthly publications](data/sources.json) and [six supplemental publications](data/research/sources.json), with URLs, retrieval timestamps and SHA-256 hashes. Compressed original HTML publications are included.
 
 ## Run locally
 
@@ -61,7 +63,7 @@ The app opens at the local URL printed by Streamlit. On PowerShell, if activatio
 
 The processed CSVs are committed, so the dashboard can run immediately after installation. The build regenerates them and creates `data/processed/banking.duckdb` from the archived sources. **The build and tests do not contact CBU.** The direct dependency versions used for validation are pinned in `requirements.txt`.
 
-## Reproduce or refresh the source archive
+## Source archive
 
 The network step is separate and explicit:
 
@@ -73,7 +75,7 @@ python -m uzbank.report
 
 The downloader scans the official monthly archive, verifies the date inside each publication and caches already downloaded pages. Existing cached pages remain unchanged; to capture source revisions, use a separate checkout or back up and replace the relevant cached source files. The fetcher does not silently rewrite historical evidence.
 
-Extending coverage requires reviewing new bank aliases, source layouts, tests and narrative period labels. A missing source month stops the refresh. It never interpolates financial values. CBU can change its archive structure; unknown formats fail explicitly.
+The six supplemental publications are frozen in `data/research/` and parsed by the offline build. They supply comparative year-end currency, maturity, liquidity, capital and balance-sheet data, plus CPI from CBU's January 2026 monetary-policy decision. The study window is fixed at 2024–2025; period checks guard the published conclusions. A missing source or unknown format stops the build.
 
 ## Pipeline
 
@@ -91,9 +93,10 @@ flowchart LR
 | Layer | Contents |
 | --- | --- |
 | `data/raw/` | Original CBU HTML publications, compressed without altering content |
+| `data/research/` | Six archived publications completing the funding and liquidity analysis |
 | `data/banks.csv` | Explicit source-name aliases and stable bank IDs |
 | `src/uzbank/` | Downloading, parsing, validation, database build and report generation |
-| `sql/` | Market shares, calendar YoY changes, CR5, HHI and ownership aggregates |
+| `sql/` | Market shares, YoY, concentration, funding and contribution decompositions |
 | `data/processed/` | Reproducible CSV exports and reconciliation results |
 | `app.py` | Interactive Streamlit dashboard |
 | `tests/` | Source integrity, financial arithmetic, edge cases and app interactions |
@@ -107,18 +110,18 @@ flowchart LR
 - Missing or zero baselines produce unavailable growth, not a fabricated 0%.
 - Ownership is the **CBU classification at each reporting date**. “Other banks” is not equated with “private domestic banks”.
 - Smart Bank and Open Bank share one stable identifier, supported by the bank's [official name-change notice](https://openbank.uz/ru/about/announcement).
-- Published integer balances are reconciled with rounding-aware tolerances. **750 published-total checks** pass in the included dataset. Cross-publication loans/deposits and retail/corporate decompositions are also checked.
+- Published integer balances are reconciled with rounding-aware tolerances. **764 reconciliations** pass: 750 monthly total checks and 14 supplemental-source checks. Cross-publication loans/deposits and retail/corporate decompositions are also checked.
 - Market shares retain the full-sector denominator when a user selects a subset of banks.
 
-See [methodology](docs/methodology.md) for definitions, limitations and reconciliation rules.
+See [methodology](docs/methodology.md) for definitions, analytical scope and reconciliation rules.
 
 ## Portfolio skills demonstrated
 
 Source discovery and provenance, financial data cleaning, entity resolution, dimensional data modeling, SQL window functions and calendar joins, reproducible ETL, domain-aware validation, interactive BI and written analysis.
 
-## Scope and possible extensions
+## Analytical scope
 
-The current project uses CBU regulatory statistics. It does not combine these with consolidated IFRS statements. A separate next phase could add audited profitability and cost metrics for selected banks after aligning accounting scope, dates and definitions. Payment-system volumes are another distinct extension; bank-level balance sheets do not contain transaction success rates or customer retention.
+The completed study covers balance-sheet growth, ownership, concentration, deposit composition, liability structure, and aggregate liquidity and capital adequacy. Its perimeter is CBU commercial-bank statistics. Balances are measured on reporting dates; the CPI-adjusted result measures the purchasing-power change of the aggregate deposit stock. All seven conclusions are generated from reproducible outputs by `src/uzbank/findings.py`, shared by the memo, portable report and dashboard.
 
 ## License and attribution
 

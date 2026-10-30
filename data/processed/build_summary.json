@@ -4,10 +4,14 @@
   "snapshots": 25,
   "bank_observations": 889,
   "distinct_banks": 36,
-  "source_publications": 50,
-  "reconciliation_checks": 750,
-  "checks_passed": 750,
-  "source_hashes_verified": 50,
+  "source_publications": 56,
+  "bank_source_publications": 50,
+  "research_source_publications": 6,
+  "reconciliation_checks": 764,
+  "checks_passed": 764,
+  "bank_reconciliation_checks": 750,
+  "research_reconciliation_checks": 14,
+  "source_hashes_verified": 56,
   "unit": "UZS billion",
-  "retrieved_at": "2026-10-28T16:34:03.905956+00:00"
+  "retrieved_at": "2026-10-29T03:02:27.021038+00:00"
 }

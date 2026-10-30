@@ -8,6 +8,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from uzbank.analytics import indexed_series, latest_at
+from uzbank.findings import completed_findings
+from uzbank.research_charts import research_charts
 
 ROOT = Path(__file__).resolve().parent
 PROCESSED = ROOT / "data/processed"
@@ -38,7 +40,7 @@ def load_data():
     return banks, sector, groups, summary
 
 
-def chart(fig, height=350):
+def chart(fig, height=350, legend_below=False):
     fig.update_layout(
         height=height, margin=dict(l=10, r=20, t=18, b=30), paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)", font=dict(family="Arial, sans-serif", color=INK, size=12),
@@ -49,6 +51,8 @@ def chart(fig, height=350):
     if fig.layout.xaxis.title.text == "date":
         fig.update_xaxes(title=None)
     fig.update_yaxes(gridcolor="#E4EAEE", zeroline=False)
+    if legend_below:
+        fig.update_layout(legend=dict(orientation="h", y=-.3), margin=dict(l=10,r=20,t=18,b=120))
     st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
 
 
@@ -82,7 +86,7 @@ cards[1].metric("Депозиты, трлн сум", f"{now.deposits/1000:,.1f}"
 cards[2].metric("Кредиты, трлн сум", f"{now.loans/1000:,.1f}", pct(now.loans_yoy_pct)+" г/г")
 cards[3].metric("Доля 5 крупнейших по активам", f"{now.cr5_pct:.1f}%", help=f"Всего на выбранную дату: {int(now.bank_count)} банков.")
 st.write("")
-overview, compare, funding, evidence = st.tabs(["Обзор рынка", "Сравнение банков", "Кредиты и депозиты", "Данные и методика"])
+overview, compare, funding, research, evidence = st.tabs(["Обзор рынка", "Сравнение банков", "Кредиты и депозиты", "Выводы исследования", "Данные и методика"])
 
 with overview:
     left, right = st.columns([1.35, 1])
@@ -120,7 +124,7 @@ with overview:
         fig = px.area(g, x="date", y="Доля, %", color="Группа", color_discrete_map={GROUPS['state']: BLUE, GROUPS['other']: TEAL})
         fig.update_yaxes(range=[0, 100])
         chart(fig, 270)
-        st.caption("Классификация ЦБ на каждую дату. Изменение долей может включать переход банков между группами.")
+        st.caption("Классификация ЦБ на каждую дату. За 2024–2025 годы изменение объёмов активов снизило государственную долю на 4,21 п.п., переход Poytaxt Bank — на 0,06 п.п. Подробный расчёт — во вкладке «Выводы исследования».")
 
 with compare:
     chosen = st.multiselect("Выберите банки", sorted(banks.bank_name.unique()),
@@ -161,7 +165,16 @@ with funding:
     chart(fig, 410)
     excluded = len(snapshot)-len(positive)
     st.caption(f"Размер круга — активы. Не показано банков с нулём кредитов или депозитов: {excluded}. "
-               "Соотношение кредитов и депозитов не является нормативом ликвидности: у банков есть другие источники фондирования.")
+               "Структура обязательств раскрыта ниже. Нормативы LCR и NSFR приведены во вкладке «Выводы исследования».")
+    st.subheader("Состав обязательств по группам банков")
+    mix = pd.read_csv(PROCESSED / "funding_structure.csv", parse_dates=["date"])
+    mix = mix[mix.date == as_of].copy()
+    mix["Группа"] = mix.ownership.map(GROUPS)
+    mix = mix.rename(columns={"deposit_liability_share_pct":"Депозиты", "other_liability_share_pct":"Прочие обязательства"})
+    fig = px.bar(mix, x="Группа", y=["Депозиты", "Прочие обязательства"], text_auto=".1f",
+                 color_discrete_sequence=[TEAL, BLUE], labels={"value":"Доля обязательств, %", "variable":""})
+    chart(fig, 300)
+    st.caption("Обязательства = активы − балансовый капитал. Прочие обязательства = обязательства − депозиты. Доли рассчитаны по суммам каждой группы.")
     a,b = st.columns(2)
     for container, label, component, total in [(a,"Депозиты физических лиц","retail_deposits","deposits"), (b,"Кредиты физическим лицам","retail_loans","loans")]:
         with container:
@@ -174,6 +187,25 @@ with funding:
             fig.update_xaxes(title="трлн сум")
             chart(fig, 390)
 
+with research:
+    st.subheader("Результаты исследования 2024–2025")
+    st.caption("Фиксированный период: 01.01.2024 — 01.01.2026. Разложения прироста депозитов и показатели ликвидности сравнивают 01.01.2025 и 01.01.2026. Фильтры других вкладок не меняют период исследования.")
+    executive, findings = completed_findings(ROOT)
+    st.success(executive)
+    a, b = st.columns(2)
+    for i, ((title, fig), container) in enumerate(zip(research_charts(ROOT), [a, b])):
+        with container:
+            st.subheader(title)
+            chart(fig, 460, legend_below=i == 0)
+    st.caption("Клиенты, валюта и срок — самостоятельные разрезы одного прироста депозитов. В каждом разрезе сумма вкладов составляет около 100%; отклонение клиентского разреза связано с округлением до млрд сум.")
+    for i, item in enumerate(findings, 1):
+        st.subheader(f"{i}. {item['title']}")
+        st.write(item["evidence"])
+        st.markdown(f"**Вывод.** {item['conclusion']}")
+        with st.expander(f"Источники к выводу {i}"):
+            for source in item["sources"]:
+                st.markdown(f"[{source['label']}]({source['url']})")
+
 with evidence:
     st.subheader("Проверяемые исходные данные")
     st.write(f"{summary['bank_observations']} наблюдений «банк × месяц», {summary['distinct_banks']} банков за весь период. "
@@ -181,8 +213,9 @@ with evidence:
     st.markdown("""- Денежные величины в выгрузке — **млрд сум**, на графиках — **трлн сум**.
 - Дата — состояние баланса на первое число месяца. Балансовые остатки нельзя суммировать по месяцам.
 - Годовой рост сравнивает точную дату с датой год назад. Пропуски и нулевая база не заменяются нулями роста.
-- Данные номинальные: инфляция и валютная переоценка не исключены.
-- Это статистика ЦБ. Показатели не смешиваются с консолидированной отчётностью МСФО.
+- Базовые суммы номинальные. Реальный рост совокупного депозитного остатка за 2025 год рассчитан отдельно с ИПЦ 7,3%: 26,0%.
+- Валютные остатки представлены в сумовом эквиваленте ЦБ; клиентский, валютный и срочный разрезы анализируются отдельно.
+- Периметр — статистика ЦБ по коммерческим банкам. Балансовый капитал используется в структуре обязательств, регулятивный — в отдельной публикации о достаточности капитала.
 - Опубликованные суммы округлены. Допуск сверки суммы N банков: (N + 1) / 2 млрд сум.
 - Smart Bank и Open Bank объединены по подтверждённому переименованию. Исходные названия сохранены в выгрузке.
 """)
@@ -193,6 +226,10 @@ with evidence:
     selected_sources = [s for s in sources if s['date']==pd.Timestamp(as_of).strftime('%Y-%m-%d')]
     for source in selected_sources:
         st.markdown(f"[{source['title']}]({source['url']})")
+    with st.expander("Дополнительные источники завершённого исследования"):
+        for source in json.loads((ROOT / "data/research/sources.json").read_text(encoding="utf-8")):
+            st.markdown(f"[{source['title']}]({source['url']})")
+        st.dataframe(pd.read_csv(PROCESSED / "research_checks.csv"), hide_index=True, width="stretch")
     with st.expander("Результаты сверок"):
         checks = pd.read_csv(PROCESSED / "quality_checks.csv")
         st.dataframe(checks[checks.date==pd.Timestamp(as_of).strftime('%Y-%m-%d')], hide_index=True, width="stretch")
